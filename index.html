@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Reviews - หน้ารีวิวร้านค้า</title>
+    
+    <!-- ฟอนต์ภาษาไทยน่ารักๆ จาก Google Fonts (Anuphan & Mali) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Mali:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS สำหรับจัด Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- =====================================================================
+         [จุดตั้งค่าเริ่มต้นสำหรับเจ้าของร้าน / ผู้ทำเทมเพลตขาย]
+         ระบบจะอัปเดตส่วนนี้อัตโนมัติเมื่อกดปุ่ม "บันทึกเป็นไฟล์เว็บพร้อมใช้ (.html)"
+    ====================================================================== -->
+    <script id="shop-config-script">
+        const DEFAULT_SHOP_CONFIG = {
+            adminPassword: "1234", // รหัสผ่านเจ้าของร้านเริ่มต้น (เปลี่ยนได้ในหน้าตั้งค่า)
+            shopName: "MELOU STUDIO",
+            shopTagline: "Customer Reviews & Cute Feedback ✨",
+            statusText: "Open for Reviews",
+            statusColor: "emerald", // ตัวเลือก: 'emerald' (เขียว), 'pink' (ชมพู), 'amber' (เหลือง)
+            logoType: "bear", // ตัวเลือก: 'bear', 'cat', 'bunny', หรือใส่ลิงก์รูปภาพ URL เช่น 'https://...'
+            categories: ["งานวาด / คอมมิชชั่น", "สินค้าแฮนด์เมด", "ของขวัญ / สติกเกอร์", "บริการน่ารักมาก"]
+        };
+    </script>
+
+    <style>
+        /* ตั้งค่าฟอนต์และธีมสีชมพูพาสเทลหลัก */
+        :root {
+            --pink-bg-start: #FFF7FA;
+            --pink-bg-end: #FFEBF2;
+            --pink-primary: #FF85B3;
+            --pink-primary-hover: #FF669F;
+            --pink-soft: #FFB3D1;
+            --pink-softer: #FFF0F5;
+            --text-main: #5A4A50;
+            --text-muted: #9E8A92;
+            --card-shadow: 0 12px 32px -4px rgba(255, 133, 179, 0.15), 0 4px 12px -2px rgba(255, 133, 179, 0.08);
+        }
+
+        body {
+            font-family: 'Anuphan', sans-serif;
+            background: linear-gradient(160deg, var(--pink-bg-start) 0%, #FFFFFF 45%, var(--pink-bg-end) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .font-cute {
+            font-family: 'Mali', cursive;
+        }
+
+        /* การ์ดมนๆ สไตล์เรฟ */
+        .pastel-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255, 214, 229, 0.75);
+            border-radius: 26px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        /* แผ่นเสียงหมุนได้ */
+        @keyframes spinDisc {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .disc-spinning {
+            animation: spinDisc 6s linear infinite;
+        }
+        .disc-paused {
+            animation-play-state: paused;
+        }
+
+        /* อนิเมชันลอยเบาๆ ของพื้นหลัง */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-14px) rotate(8deg); }
+        }
+        .bg-floater {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.45;
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+
+        /* อนิเมชันโปรยหัวใจ & ดาว เมื่อกดปุ่มหรือส่งรีวิว */
+        @keyframes showerFall {
+            0% {
+                transform: translateY(-40px) scale(0.6) rotate(0deg);
+                opacity: 0;
+            }
+            15% {
+                opacity: 1;
+            }
+            85% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(105vh) scale(1.1) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        .shower-particle {
+            position: fixed;
+            top: -20px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: showerFall linear forwards;
+        }
+
+        /* สไตล์แถบเลื่อนเสียง (Volume Slider) */
+        input[type="range"].pastel-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: #FFE3ED;
+            border-radius: 999px;
+            outline: none;
+        }
+        input[type="range"].pastel-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #FF7AA8;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(255, 122, 168, 0.5);
+            transition: transform 0.15s;
+        }
+        input[type="range"].pastel-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* ซ่อน Scrollbar ของแท็กแนวนอน */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        /* อนิเมชันสั่นเบาๆ เวลากรอกรหัสผิด */
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake-error {
+            animation: shakeError 0.35s ease;
+        }
+    </style>
+</head>
+<body class="py-6 px-4 sm:py-10">
+
+    <!-- พื้นหลังหัวใจและดาวจางๆ ลอยคลอตลอดเวลา (เหมือนในเรฟ) -->
+    <div id="ambient-bg" aria-hidden="true"></div>
+
+    <!-- คอนเทนเนอร์หลัก จัดกึ่งกลางแนวตั้งเหมือนหน้าลิงก์รวม -->
+    <main class="relative z-10 max-w-[540px] mx-auto space-y-4">
+
+        <!-- =================================================================
+             1. ส่วนบนสุด (Top Bar): สถานะร้าน & ปุ่มโปรยหัวใจ & ดาว
+        ================================================================== -->
+        <header class="flex items-center justify-between px-1 mb-1">
+            <!-- สถานะเปิดรับรีวิว -->
+            <div class="flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-pink-100 shadow-sm">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span id="status-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                </span>
+                <span id="display-status" class="text-xs font-medium text-[#7A646C]">Open for Reviews</span>
+            </div>
+
+            <!-- ปุ่มโปรยหัวใจ & ดาว -->
+            <button onclick="triggerHeartStarShower(28)" 
+                    class="group flex items-center gap-1.5 bg-white/90 hover:bg-pink-50 active:scale-95 text-[#FF6B9E] text-xs font-semibold px-4 py-1.5 rounded-full border border-pink-200/80 shadow-sm transition-all cursor-pointer">
+                <span class="text-sm group-hover:animate-bounce">🩷</span>
+                <span>โปรยหัวใจ & ดาว</span>
+            </button>
+        </header>
+
+        <!-- =================================================================
+             2. การ์ดโปรไฟล์ร้านค้า (Shop Header Card - ล็อกด้วยรหัสผ่านเจ้าของร้าน)
+        ================================================================== -->
+        <section class="pastel-card p-5 relative">
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center gap-4 min-w-0">
+                    <!-- โลโก้ร้านน่ารักๆ -->
+                    <div id="shop-logo-container" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FFF0F5] to-[#FFE0EC] border border-pink-200/80 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                        <!-- วาด SVG น้องหมีพาสเทลเริ่มต้น -->
+                    </div>
+
+                    <!-- ชื่อร้านและคำโปรย -->
+                    <div class="min-w-0">
+                        <h1 id="display-shop-name" class="text-xl sm:text-2xl font-bold tracking-tight text-[#4A3B41] italic truncate">
+                            MELOU STUDIO
+                        </h1>
+                        <p id="display-shop-tagline" class="text-xs sm:text-sm text-[#9E8A92] mt-0.5 truncate">
+                            Customer Reviews & Cute Feedback ✨
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ปุ่มแม่กุญแจ / ตั้งค่าร้านค้า (ต้องใส่รหัสผ่านก่อนเข้า) -->
+                <button id="toggle-admin-btn" onclick="handleAdminButtonClick()" title="เข้าสู่ระบบเจ้าของร้าน (Admin)"
+                        class="w-11 h-11 rounded-2xl bg-[#FFF5F8] hover:bg-[#FFE4EE] text-[#FF7AA8] border border-pink-200/70 flex items-center justify-center shrink-0 transition-all active:scale-95 cursor-pointer relative">
+                    <!-- ไอคอนแม่กุญแจล็อก (โหมดผู้เยี่ยมชม) -->
+                    <svg id="icon-lock-closed" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <!-- ไอคอนปลดล็อก (เมื่อเจ้าของร้านล็อกอินอยู่) -->
+                    <svg id="icon-lock-open" class="w-5 h-5 hidden text-emerald-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"></path>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             3. กล่องเล่นเพลง (Pastel Music Box - ดีไซน์ตามเรฟเป๊ะๆ)
+        ================================================================== -->
+        <section class="pastel-card p-5">
+            <div class="flex items-center gap-4">
+                <!-- แผ่นเสียงหมุนได้ -->
+                <div class="relative shrink-0">
+                    <div id="music-disc" class="w-16 h-16 rounded-full bg-gradient-to-tr from-[#FF8FB6] via-[#FFB5CE] to-[#FFD9E6] p-1.5 shadow-md disc-spinning disc-paused flex items-center justify-center">
+                        <div class="w-full h-full rounded-full border border-white/60 flex items-center justify-center relative">
+                            <!-- รูตรงกลางแผ่นเสียง -->
+                            <div class="w-5 h-5 rounded-full bg-white shadow-inner flex items-center justify-center">
+                                <div class="w-2 h-2 rounded-full bg-[#FF7AA8]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ข้อมูลเพลง + แถบความคืบหน้า -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="text-sm">☁️</span>
+                            <h2 id="track-title" class="text-sm font-bold text-[#4A3B41] truncate">Pastel Music Box</h2>
+                        </div>
+                        <span class="shrink-0 text-[11px] font-medium text-[#FF6B9E] bg-[#FFF0F5] border border-pink-200/80 px-2.5 py-0.5 rounded-full">
+                            • เพลง
+                        </span>
+                    </div>
+                    <p id="track-subtitle" class="text-xs text-[#9E8A92] truncate mt-0.5">
+                        Melou BGM • กล่องดนตรีกล่อมฝัน
+                    </p>
+
+                    <!-- แถบ Progress จำลองจังหวะเพลง -->
+                    <div class="flex items-center gap-2 mt-2.5">
+                        <div class="flex-1 h-1.5 bg-[#FFE8F0] rounded-full overflow-hidden">
+                            <div id="music-progress" class="h-full bg-gradient-to-r from-[#FF9EC0] to-[#FF6B9E] rounded-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <span id="music-timer" class="text-[11px] font-medium text-[#B39EA6] tabular-nums">0:00</span>
+                    </div>
+                </div>
+
+                <!-- ปุ่มควบคุมการเล่น (ย้อนกลับ / เล่น-หยุด / ถัดไป) -->
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="prevTrack()" title="เพลงก่อนหน้า" class="p-1.5 text-[#FF8FB6] hover:text-[#FF5C93] transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button id="play-pause-btn" onclick="toggleMusic()" title="เล่น / หยุดเพลง"
+                            class="w-11 h-11 rounded-full bg-gradient-to-tr from-[#FF75A6] to-[#FF9EC0] hover:from-[#FF5C93] hover:to-[#FF8FB6] text-white shadow-md shadow-pink-200 flex items-center justify-center transition-transform active:scale-90 cursor-pointer">
+                        <!-- ไอคอน Play -->
+                        <svg id="icon-play" class="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <!-- ไอคอน Pause -->
+                        <svg id="icon-pause" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <button onclick="nextTrack()" title="เพลงถัดไป" class="p-1.5 text-[#FF8FB6] hover:text-[#FF5C93] transition cursor-pointer">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- แถบล่างของกล่องเพลง: เลือกแทร็กเพลง & ปรับระดับเสียง -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-pink-100/80">
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar" id="track-pills">
+                    <button onclick="selectTrack(0)" class="track-pill active text-[11px] font-semibold px-3 py-1 rounded-full bg-[#FFE3EE] text-[#FF5C93] transition cursor-pointer whitespace-nowrap">
+                        1. Music Box
+                    </button>
+                    <button onclick="selectTrack(1)" class="track-pill text-[11px] font-medium px-3 py-1 rounded-full bg-[#FFF7FA] text-[#9E8A92] hover:bg-[#FFF0F5] transition cursor-pointer whitespace-nowrap">
+                        2. Cozy Lo-Fi
+                    </button>
+                    <button onclick="selectTrack(2)" class="track-pill text-[11px] font-medium px-3 py-1 rounded-full bg-[#FFF7FA] text-[#9E8A92] hover:bg-[#FFF0F5] transition cursor-pointer whitespace-nowrap">
+                        3. Pastel Pop
+                    </button>
+                </div>
+
+                <!-- แถบปรับระดับเสียง -->
+                <div class="flex items-center gap-2 ml-auto">
+                    <svg class="w-4 h-4 text-[#FF8FB6]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                    </svg>
+                    <input type="range" id="volume-slider" min="0" max="100" value="65" oninput="updateVolume(this.value)" class="pastel-slider w-20">
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             4. การ์ดสรุปคะแนนรีวิว (Rating Summary Card - 2 คอลัมน์แบบเรฟ)
+        ================================================================== -->
+        <section class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+            <!-- ฝั่งซ้าย: คะแนนเฉลี่ยรวม -->
+            <div class="sm:col-span-5 pastel-card p-5 bg-gradient-to-b from-[#FFF5F9] to-white flex flex-col items-center justify-center text-center relative overflow-hidden">
+                <span class="text-[11px] font-semibold text-[#FF6B9E] bg-white px-3 py-0.5 rounded-full border border-pink-100 shadow-xs mb-2">
+                    ✨ Overall Rating
+                </span>
+                <div class="flex items-baseline gap-1">
+                    <span id="avg-rating-number" class="text-4xl font-extrabold text-[#FF5C93] font-cute">5.0</span>
+                    <span class="text-sm font-medium text-[#B39EA6]">/ 5.0</span>
+                </div>
+                <!-- ดาว 5 ดวง -->
+                <div class="flex items-center gap-1 my-1.5 text-[#FFB84D]" id="avg-stars-icons">
+                    ★★★★★
+                </div>
+                <p class="text-xs text-[#8C767E]">
+                    จากทั้งหมด <strong id="total-reviews-count" class="text-[#FF5C93]">0</strong> รีวิว
+                </p>
+                <!-- ดาวตกแต่งมุมการ์ด -->
+                <span class="absolute bottom-2 right-3 text-amber-300/80 text-lg select-none">★</span>
+            </div>
+
+            <!-- ฝั่งขวา: แถบสัดส่วนคะแนน 5 ดาว ถึง 1 ดาว -->
+            <div class="sm:col-span-7 pastel-card p-5 flex flex-col justify-center space-y-2">
+                <div id="rating-bars-container" class="space-y-1.5">
+                    <!-- สร้างแถบด้วย JS อัตโนมัติ -->
+                </div>
+            </div>
+        </section>
+
+        <!-- =================================================================
+             5. การ์ดเขียนรีวิวใหม่ (Write a Review Card - ในหน้าเดียว)
+        ================================================================== -->
+        <section class="pastel-card p-5 sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-[#FFF0F5] text-[#FF6B9E] flex items-center justify-center text-lg">
+                        💌
+                    </div>
+                    <div>
+                        <h2 class="text-base font-bold text-[#4A3B41]">เขียนรีวิวให้ร้านค้า</h2>
+                        <p class="text-xs text-[#9E8A92]">แบ่งปันความประทับใจของคุณได้เลยน้า</p>
+                    </div>
+                </div>
+                <span class="text-xs font-medium text-[#FF7AA8] bg-[#FFF5F8] px-3 py-1 rounded-full border border-pink-100">
+                    +10 แต้มความน่ารัก
+                </span>
+            </div>
+
+            <form id="review-form" onsubmit="submitNewReview(event)" class="space-y-3.5">
+                <!-- เลือกดาวความพึงพอใจ -->
+                <div class="bg-[#FFF9FB] border border-pink-100/90 rounded-2xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <span class="text-xs font-semibold text-[#6E5A62]">ให้คะแนนความพึงพอใจ:</span>
+                    <div class="flex items-center gap-1.5" id="star-selector">
+                        <button type="button" onclick="setRating(1)" data-star="1" class="star-btn text-2xl text-amber-400 cursor-pointer">★</button>
+                        <button type="button" onclick="setRating(2)" data-star="2" class="star-btn text-2xl text-amber-400 cursor-pointer">★</button>
+                        <button type="button" onclick="setRating(3)" data-star="3" class="star-btn text-2xl text-amber-400 cursor-pointer">★</button>
+                        <button type="button" onclick="setRating(4)" data-star="4" class="star-btn text-2xl text-amber-400 cursor-pointer">★</button>
+                        <button type="button" onclick="setRating(5)" data-star="5" class="star-btn text-2xl text-amber-400 cursor-pointer">★</button>
+                        <span id="rating-label" class="ml-1.5 text-xs font-bold text-[#FF6B9E] bg-white px-2.5 py-0.5 rounded-full border border-pink-100">
+                            ประทับใจมาก!
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ชื่อลูกค้า & หมวดหมู่ -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-[#7A646C] mb-1 ml-1">ชื่อของคุณ / นามแฝง *</label>
+                        <input type="text" id="reviewer-name" required placeholder="เช่น น้องมิ้นท์, คุณพลอย..."
+                               class="w-full px-4 py-2.5 text-sm bg-[#FFF9FB] border border-pink-200/80 rounded-2xl focus:outline-none focus:border-[#FF7AA8] focus:bg-white transition placeholder:text-[#C7B5BC]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[#7A646C] mb-1 ml-1">หมวดหมู่ที่สั่งซื้อ</label>
+                        <select id="reviewer-category"
+                                class="w-full px-3.5 py-2.5 text-sm bg-[#FFF9FB] border border-pink-200/80 rounded-2xl focus:outline-none focus:border-[#FF7AA8] focus:bg-white transition text-[#5A4A50]">
+                            <!-- เติมตัวเลือกจาก Config อัตโนมัติ -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- ข้อความรีวิว -->
+                <div>
+                    <label class="block text-xs font-medium text-[#7A646C] mb-1 ml-1">ความรู้สึก / รีวิวของคุณ *</label>
+                    <textarea id="reviewer-comment" rows="3" required placeholder="พิมพ์ข้อความรีวิวตรงนี้ได้เลย... งานน่ารัก แม่ค้าใจดี ส่งไวมาก 🩷"
+                              class="w-full px-4 py-3 text-sm bg-[#FFF9FB] border border-pink-200/80 rounded-2xl focus:outline-none focus:border-[#FF7AA8] focus:bg-white transition placeholder:text-[#C7B5BC] resize-none"></textarea>
+                </div>
+
+                <!-- แนบรูปภาพพรีวิว & ปุ่มส่งรีวิว -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                    <div class="flex items-center gap-2">
+                        <label for="review-image-input" class="flex items-center gap-1.5 text-xs font-medium text-[#FF6B9E] bg-[#FFF0F5] hover:bg-[#FFE3EE] px-3.5 py-2 rounded-full border border-pink-200/70 cursor-pointer transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>แนบรูปภาพรีวิว</span>
+                        </label>
+                        <input type="file" id="review-image-input" accept="image/*" onchange="handleImageUpload(event)" class="hidden">
+
+                        <!-- กล่องแสดงรูปตัวอย่างที่เลือก -->
+                        <div id="image-preview-wrapper" class="hidden relative">
+                            <img id="image-preview" src="" alt="Preview" class="w-10 h-10 rounded-xl object-cover border border-pink-200">
+                            <button type="button" onclick="clearUploadedImage()" class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center shadow">×</button>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="ml-auto flex items-center gap-2 bg-gradient-to-r from-[#FF75A6] to-[#FF94BA] hover:from-[#FF5C93] hover:to-[#FF7AA8] text-white text-sm font-semibold px-6 py-2.5 rounded-full shadow-md shadow-pink-200/80 transition-all active:scale-95 cursor-pointer">
+                        <span>ส่งรีวิวน่ารักๆ</span>
+                        <span>✨</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- =================================================================
+             6. รายการรีวิวจากลูกค้า (Customer Reviews Feed - ในหน้าเดียว)
+        ================================================================== -->
+        <section class="space-y-3 pt-1">
+            <!-- หัวข้อ + ตัวกรองรีวิว -->
+            <div class="flex flex-wrap items-center justify-between gap-2 px-1">
+                <h2 class="text-sm font-bold text-[#5A4A50] flex items-center gap-1.5">
+                    <span>🌷 รีวิวจากลูกค้าที่น่ารัก</span>
+                </h2>
+
+                <!-- ปุ่มกรองรีวิว -->
+                <div class="flex items-center gap-1.5">
+                    <button onclick="filterReviews('all')" data-filter="all" class="filter-btn active text-xs font-semibold px-3 py-1 rounded-full bg-[#FF7AA8] text-white shadow-xs transition cursor-pointer">
+                        ทั้งหมด
+            <!-- แถบแจ้งเตือนเมื่อเปิดโหมดเจ้าของร้าน (สามารถปักหมุด / ลบรีวิวได้) -->
+            <div id="admin-banner" class="hidden bg-gradient-to-r from-[#FFF0F5] to-[#FFE4EE] border border-pink-200 text-[#5A4A50] text-xs px-4 py-3 rounded-2xl flex flex-wrap items-center justify-between gap-2 shadow-xs">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">👑</span>
+                    <span><strong>โหมดเจ้าของร้าน:</strong> ปักหมุด/ลบรีวิว หรือกดตั้งค่าได้</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openSettingsModal()" class="bg-white hover:bg-pink-50 text-[#FF5C93] font-semibold px-3 py-1 rounded-full border border-pink-200 transition cursor-pointer">
+                        ⚙️ ตั้งค่าร้าน
+                    </button>
+                    <button onclick="lockAdminSession()" class="bg-[#FF6B9E] hover:bg-[#FF528D] text-white font-semibold px-3 py-1 rounded-full transition cursor-pointer">
+                        🔒 ล็อกออก
+                    </button>
+                </div>
+            </div>
+
+            <!-- รายการการ์ดรีวิว -->
+            <div id="reviews-list" class="space-y-3">
+                <!-- การ์ดรีวิวจะถูกสร้างด้วย JavaScript ตรงนี้ -->
+            </div>
+        </section>
+
+        <!-- ฟุตเตอร์เล็กๆ น่ารักด้านล่าง -->
+        <footer class="text-center pt-4 pb-6 space-y-1">
+            <p class="text-xs text-[#B39EA6]">
+                Thank you for supporting <span id="footer-shop-name" class="font-semibold text-[#FF7AA8]">MELOU STUDIO</span> 🩷
+            </p>
+        </footer>
+
+    </main>
+
+    <!-- =====================================================================
+         Modal 1: หน้าต่างกรอกรหัสผ่านเจ้าของร้าน (Admin PIN Login)
+    ====================================================================== -->
+    <div id="login-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-pink-950/25 backdrop-blur-xs">
+        <div id="login-modal-box" class="bg-white rounded-[28px] border border-pink-200 shadow-2xl max-w-sm w-full p-6 space-y-4 text-center">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-[#FFF0F5] text-[#FF6B9E] border border-pink-200/80 flex items-center justify-center text-2xl shadow-inner">
+                🔐
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-[#4A3B41]">เข้าสู่ระบบเจ้าของร้าน</h3>
+                <p class="text-xs text-[#9E8A92] mt-1">กรุณากรอกรหัสผ่านเพื่อแก้ไขข้อมูลร้านและจัดการรีวิว</p>
+            </div>
+
+            <form onsubmit="verifyAdminPassword(event)" class="space-y-3">
+                <input type="password" id="admin-password-input" required placeholder="กรอกรหัสผ่านร้านค้า..."
+                       class="w-full px-4 py-3 text-center text-base tracking-widest font-bold bg-[#FFF9FB] border border-pink-200 rounded-2xl focus:outline-none focus:border-[#FF7AA8] focus:bg-white">
+                
+                <p id="login-error-msg" class="hidden text-xs font-semibold text-rose-500">
+                    ❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
+                </p>
+
+                <div class="bg-[#FFF5F8] border border-pink-100 rounded-xl p-2.5 text-[11px] text-[#8C767E]">
+                    💡 รหัสผ่านเริ่มต้นคือ <strong class="text-[#FF5C93] font-bold">1234</strong><br>
+                    (สามารถเปลี่ยนรหัสผ่านใหม่ได้ทันทีหลังเข้าสู่ระบบ)
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button type="button" onclick="closeLoginModal()" class="flex-1 py-2.5 text-xs font-semibold text-[#8C767E] bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="flex-1 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-[#FF75A6] to-[#FF94BA] hover:from-[#FF5C93] hover:to-[#FF7AA8] rounded-full shadow-sm cursor-pointer">
+                        ปลดล็อก ✨
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         Modal 2: แผงควบคุมเจ้าของร้าน (Owner Dashboard - แก้ชื่อร้าน/รหัสผ่าน/Export)
+    ====================================================================== -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-pink-950/25 backdrop-blur-xs overflow-y-auto">
+        <div class="bg-white rounded-[28px] border border-pink-200 shadow-2xl max-w-md w-full p-6 space-y-4 my-auto">
+            <div class="flex items-center justify-between border-b border-pink-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-lg">👑</span>
+                    <h3 class="text-base font-bold text-[#4A3B41]">แผงควบคุมเจ้าของร้าน</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="w-8 h-8 rounded-full bg-pink-50 text-[#FF6B9E] hover:bg-pink-100 flex items-center justify-center font-bold cursor-pointer">×</button>
+            </div>
+
+            <!-- แท็บเมนูย่อยในหน้าตั้งค่า -->
+            <div class="flex bg-[#FFF5F8] p-1 rounded-2xl border border-pink-100 text-xs font-semibold">
+                <button type="button" onclick="switchSettingsTab('shop')" id="tab-btn-shop" class="flex-1 py-2 rounded-xl bg-white text-[#FF5C93] shadow-xs transition cursor-pointer">
+                    🎀 ข้อมูลร้านค้า
+                </button>
+                <button type="button" onclick="switchSettingsTab('security')" id="tab-btn-security" class="flex-1 py-2 rounded-xl text-[#8C767E] hover:text-[#FF5C93] transition cursor-pointer">
+                    🔑 รหัสผ่าน & ส่งออก
+                </button>
+            </div>
+
+            <!-- แท็บ 1: แก้ไขข้อมูลร้านค้า -->
+            <div id="settings-tab-shop" class="space-y-3 text-sm">
+                <div>
+                    <label class="block text-xs font-semibold text-[#7A646C] mb-1">ชื่อร้านค้า (Shop Name)</label>
+                    <input type="text" id="edit-shop-name" class="w-full px-3.5 py-2 bg-[#FFF9FB] border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-[#7A646C] mb-1">คำโปรยใต้ชื่อร้าน (Tagline)</label>
+                    <input type="text" id="edit-shop-tagline" class="w-full px-3.5 py-2 bg-[#FFF9FB] border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8]">
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-[#7A646C] mb-1">ข้อความสถานะ</label>
+                        <input type="text" id="edit-status-text" class="w-full px-3.5 py-2 bg-[#FFF9FB] border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8]">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-[#7A646C] mb-1">สีจุดสถานะ</label>
+                        <select id="edit-status-color" class="w-full px-2.5 py-2 bg-[#FFF9FB] border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8] text-xs">
+                            <option value="emerald">🟢 เขียว (เปิด)</option>
+                            <option value="pink">🩷 ชมพู (น่ารัก)</option>
+                            <option value="amber">🟡 เหลือง (ใกล้เต็ม)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-[#7A646C] mb-1">หมวดหมู่รีวิว (คั่นด้วยเครื่องหมายจุลภาค , )</label>
+                    <input type="text" id="edit-categories" placeholder="งานวาด, สินค้าแฮนด์เมด, บริการน่ารัก" class="w-full px-3.5 py-2 text-xs bg-[#FFF9FB] border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-[#7A646C] mb-1">เลือกไอคอนร้าน หรือใส่ลิงก์รูปภาพ (URL)</label>
+                    <div class="flex gap-2 mb-2">
+                        <button type="button" onclick="setLogoPreset('bear')" class="flex-1 py-1.5 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs font-medium text-[#5A4A50] cursor-pointer">🐻 น้องหมี</button>
+                        <button type="button" onclick="setLogoPreset('cat')" class="flex-1 py-1.5 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs font-medium text-[#5A4A50] cursor-pointer">🐱 น้องแมว</button>
+                        <button type="button" onclick="setLogoPreset('bunny')" class="flex-1 py-1.5 rounded-xl bg-pink-50 hover:bg-pink-100 border border-pink-200 text-xs font-medium text-[#5A4A50] cursor-pointer">🐰 น้องกระต่าย</button>
+                    </div>
+                    <input type="text" id="edit-logo-url" placeholder="หรือวางลิงก์รูปโลโก้ร้าน (https://...)" class="w-full px-3.5 py-2 text-xs bg-[#FFF9FB] border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8]">
+                </div>
+            </div>
+
+            <!-- แท็บ 2: เปลี่ยนรหัสผ่าน & ดาวน์โหลดไฟล์เว็บสำเร็จรูปสำหรับขาย/อัปโหลด -->
+            <div id="settings-tab-security" class="hidden space-y-3.5 text-sm">
+                <div class="bg-[#FFF9FB] border border-pink-200/80 rounded-2xl p-3.5 space-y-2">
+                    <label class="block text-xs font-bold text-[#5A4A50]">🔑 ตั้งรหัสผ่านเจ้าของร้านใหม่</label>
+                    <input type="text" id="edit-admin-password" placeholder="ตั้งรหัสผ่านใหม่ (เช่น 8899)" class="w-full px-3.5 py-2 text-sm bg-white border border-pink-200 rounded-xl focus:outline-none focus:border-[#FF7AA8]">
+                    <p class="text-[11px] text-[#9E8A92]">* ใช้รหัสนี้สำหรับล็อกอินครั้งถัดไปเพื่อลบหรือปักหมุดรีวิว</p>
+                </div>
+
+                <!-- ฟีเจอร์สำคัญสำหรับคนทำเทมเพลตขาย & ลูกค้าที่ซื้อไปอัปโหลดขึ้นเว็บ -->
+                <div class="bg-gradient-to-br from-[#FFF0F5] to-[#FFE6F0] border border-pink-200 rounded-2xl p-4 space-y-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">📦</span>
+                        <h4 class="text-xs font-bold text-[#4A3B41]">บันทึกเป็นไฟล์เว็บพร้อมใช้งาน (.html)</h4>
+                    </div>
+                    <p class="text-[11px] text-[#7A646C] leading-relaxed">
+                        เมื่อแก้ไขชื่อร้าน โลโก้ รหัสผ่าน และรีวิวเรียบร้อยแล้ว กดปุ่มด้านล่างเพื่อดาวน์โหลดไฟล์ <strong>index.html</strong> ที่มีข้อมูลร้านของคุณฝังอยู่ข้างใน นำไปอัปโหลดขึ้นเว็บให้ลูกค้าทั่วไปเปิดดูได้ทันที!
+                    </p>
+                    <button type="button" onclick="exportStandaloneHTML()"
+                            class="w-full py-2.5 bg-white hover:bg-pink-50 text-[#FF5C93] border border-pink-300 font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer">
+                        <span>⬇️ ดาวน์โหลดไฟล์เว็บพร้อมอัปโหลด (.html)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ปุ่มด้านล่าง Modal -->
+            <div class="flex items-center justify-between pt-2 border-t border-pink-100 gap-2">
+                <button type="button" onclick="lockAdminSession(); closeSettingsModal();" class="text-xs font-semibold text-rose-500 hover:underline cursor-pointer">
+                    🔒 ล็อกออกจากระบบ
+                </button>
+                <div class="flex gap-2">
+                    <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 text-xs font-semibold text-[#8C767E] bg-gray-100 hover:bg-gray-200 rounded-full cursor-pointer">
+                        ปิด
+                    </button>
+                    <button type="button" onclick="saveShopSettings()" class="px-5 py-2 text-xs font-semibold text-white bg-[#FF6B9E] hover:bg-[#FF528D] rounded-full shadow-sm cursor-pointer">
+                        บันทึกข้อมูล ✨
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ดูรูปภาพรีวิวขนาดเต็ม -->
+    <div id="lightbox-modal" onclick="closeLightbox()" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-xs cursor-zoom-out">
+        <img id="lightbox-img" src="" alt="Full Review Image" class="max-w-full max-h-[85vh] rounded-3xl shadow-2xl border-4 border-white">
+    </div>
+
+    <!-- Toast แจ้งเตือนน่ารักๆ (แทน alert) -->
+    <div id="toast-box" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 translate-y-4">
+        <div class="bg-[#4A3B41]/95 text-white text-xs font-medium px-5 py-2.5 rounded-full shadow-lg flex items-center gap-2">
+            <span>🩷</span>
+            <span id="toast-message">บันทึกข้อมูลเรียบร้อยแล้ว!</span>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         JAVASCRIPT LOGIC: จัดการร้านค้า, ระบบรีวิว, ดนตรี Web Audio API, และเอฟเฟกต์โปรย
+    ====================================================================== -->
+    <script>
+        // -----------------------------------------------------------------
+        // 1. ข้อมูลตัวอย่างรีวิวเริ่มต้น (จะแสดงเมื่อเปิดเว็บครั้งแรก)
+        // -----------------------------------------------------------------
+        const INITIAL_REVIEWS = [
+            {
+                id: 101,
+                name: "น้องมิ้นท์ 🌷",
+                category: "งานวาด / คอมมิชชั่น",
+                rating: 5,
+                comment: "งานน่ารักมากกกก ละมุนใจสุดๆ แม่ค้าใจดีและใส่ใจรายละเอียดทุกจุดเลยค่ะ ส่งงานไวตรงเวลา ประทับใจมากๆ ไว้มาอุดหนุนอีกแน่นอนค่า 🩷✨",
+                date: "2 วันที่แล้ว",
+                likes: 14,
+                likedByMe: false,
+                pinned: true,
+                image: ""
+            },
+            {
+                id: 102,
+                name: "คุณพลอยใส",
+                category: "สินค้าแฮนด์เมด",
+                rating: 5,
+                comment: "แพ็กของมาดีมาก เปิดกล่องมาหอมกลิ่นพาสเทลสุดๆ มีของแถมน่ารักๆ มาให้ด้วย ขอบคุณนะคะ น่ารักเกินต้านจริงๆ 💖",
+                date: "5 วันที่แล้ว",
+                likes: 9,
+                likedByMe: false,
+                pinned: false,
+                image: ""
+            },
+            {
+                id: 103,
+                name: "BabyPeach 🍑",
+                category: "ของขวัญ / สติกเกอร์",
+                rating: 5,
+                comment: "สีสวยตรงปก 100% เลยค่ะ สั่งไปให้เป็นของขวัญวันเกิดเพื่อน เพื่อนชอบมากก แนะนำร้านนี้เลยไม่ผิดหวังแน่นอน!",
+                date: "1 สัปดาห์ที่แล้ว",
+                likes: 7,
+                likedByMe: false,
+                pinned: false,
+                image: ""
+            }
+        ];
+
+        // -----------------------------------------------------------------
+        // 2. ตัวแปรสถานะ (State Management)
+        // -----------------------------------------------------------------
+        let shopConfig = JSON.parse(localStorage.getItem('pastel_shop_config')) || { ...DEFAULT_SHOP_CONFIG };
+        let reviews = JSON.parse(localStorage.getItem('pastel_shop_reviews')) || [...INITIAL_REVIEWS];
+        let currentRating = 5;
+        let currentFilter = 'all';
+        let uploadedImageBase64 = "";
+        let isAdminMode = sessionStorage.getItem('pastel_admin_unlocked') === 'true';
+
+        // -----------------------------------------------------------------
+        // 3. เริ่มต้นการทำงานเมื่อโหลดหน้าเว็บ
+        // -----------------------------------------------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            createAmbientBackground();
+            applyShopConfigToUI();
+            updateAdminUIState();
+            renderRatingSummary();
+            renderReviewsList();
+            
+            // โปรยหัวใจต้อนรับเบาๆ ตอนเปิดหน้าเว็บ
+            setTimeout(() => triggerHeartStarShower(14), 400);
+        });
+
+        // -----------------------------------------------------------------
+        // 4. สร้างพื้นหลังหัวใจและดาวจางๆ ลอยคลอ (เหมือนในเรฟ)
+        // -----------------------------------------------------------------
+        function createAmbientBackground() {
+            const container = document.getElementById('ambient-bg');
+            const items = [
+                { top: '8%', left: '6%', type: 'heart', size: 18, delay: '0s' },
+                { top: '15%', left: '18%', type: 'star', size: 22, delay: '1.2s' },
+                { top: '22%', left: '12%', type: 'heart', size: 14, delay: '2.5s' },
+                { top: '12%', right: '8%', type: 'star', size: 24, delay: '0.8s' },
+                { top: '28%', right: '15%', type: 'star', size: 18, delay: '1.9s' },
+                { top: '48%', left: '8%', type: 'star', size: 20, delay: '3.1s' },
+                { top: '65%', right: '10%', type: 'heart', size: 20, delay: '1.5s' },
+                { top: '80%', left: '14%', type: 'star', size: 22, delay: '2.2s' },
+                { top: '85%', right: '18%', type: 'heart', size: 16, delay: '0.5s' }
+            ];
+
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'bg-floater';
+                el.style.top = item.top;
+                if (item.left) el.style.left = item.left;
+                if (item.right) el.style.right = item.right;
+                el.style.animationDelay = item.delay;
+
+                if (item.type === 'heart') {
+                    el.innerHTML = `<svg width="${item.size}" height="${item.size}" viewBox="0 0 24 24" fill="none" stroke="#FFB5CE" stroke-width="1.8"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+                } else {
+                    el.innerHTML = `<svg width="${item.size}" height="${item.size}" viewBox="0 0 24 24" fill="none" stroke="#FFC2D6" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`;
+                }
+                container.appendChild(el);
+            });
+        }
+
+        // -----------------------------------------------------------------
+        // 5. เอฟเฟกต์โปรยหัวใจ & ดาวทั่วหน้าจอ
+        // -----------------------------------------------------------------
+        function triggerHeartStarShower(count = 25) {
+            const icons = ['🩷', '💖', '✨', '⭐', '🌸', '🤍'];
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'shower-particle';
+                particle.textContent = icons[Math.floor(Math.random() * icons.length)];
+                particle.style.left = Math.random() * 96 + 'vw';
+                particle.style.fontSize = (Math.random() * 14 + 14) + 'px';
+                const duration = Math.random() * 2 + 2.2;
+                particle.style.animationDuration = duration + 's';
+                particle.style.animationDelay = (Math.random() * 0.6) + 's';
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), (duration + 0.8) * 1000);
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // 6. การจัดการตั้งค่าร้านค้า (แก้ไขชื่อร้าน, โลโก้, คำโปรย)
+        // -----------------------------------------------------------------
+        function getLogoSVG(type) {
+            if (type && (type.startsWith('http') || type.startsWith('data:'))) {
+                return `<img src="${type}" alt="Shop Logo" class="w-full h-full object-cover" onerror="this.outerHTML=getLogoSVG('bear')">`;
+            }
+            if (type === 'cat') {
+                return `<svg class="w-10 h-10 text-[#FF7AA8]" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 26 L12 12 L25 18 C29 17 35 17 39 18 L52 12 L48 26 C51 30 52 35 52 40 C52 50 43 54 32 54 C21 54 12 50 12 40 C12 35 13 30 16 26 Z" fill="#FFF"/>
+                    <circle cx="24" cy="36" r="2" fill="currentColor"/><circle cx="40" cy="36" r="2" fill="currentColor"/>
+                    <path d="M29 42 Q32 45 35 42"/>
+                </svg>`;
+            }
+            if (type === 'bunny') {
+                return `<svg class="w-10 h-10 text-[#FF7AA8]" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 28 C19 12 25 8 28 24 M41 28 C45 12 39 8 36 24" fill="#FFF"/>
+                    <ellipse cx="32" cy="40" rx="17" ry="14" fill="#FFF"/>
+                    <circle cx="25" cy="38" r="2" fill="currentColor"/><circle cx="39" cy="38" r="2" fill="currentColor"/>
+                    <path d="M30 43 Q32 45 34 43"/>
+                </svg>`;
+            }
+            // Default: น้องหมีพาสเทลเหมือนในเรฟ
+            return `<svg class="w-10 h-10 text-[#FF7AA8]" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="20" r="7" fill="#FFF"/><circle cx="46" cy="20" r="7" fill="#FFF"/>
+                <ellipse cx="32" cy="36" rx="19" ry="16" fill="#FFF"/>
+                <circle cx="25" cy="34" r="2" fill="currentColor"/><circle cx="39" cy="34" r="2" fill="currentColor"/>
+                <ellipse cx="32" cy="40" rx="5" ry="3.5" fill="#FFE3EE" stroke="none"/>
+                <circle cx="32" cy="39" r="1.5" fill="currentColor"/>
+            </svg>`;
+        }
+
+        function applyShopConfigToUI() {
+            document.title = `${shopConfig.shopName} - Customer Reviews`;
+            document.getElementById('display-shop-name').textContent = shopConfig.shopName;
+            document.getElementById('footer-shop-name').textContent = shopConfig.shopName;
+            document.getElementById('display-shop-tagline').textContent = shopConfig.shopTagline;
+            document.getElementById('display-status').textContent = shopConfig.statusText;
+            document.getElementById('shop-logo-container').innerHTML = getLogoSVG(shopConfig.logoType);
+
+            // อัปเดตสีจุดสถานะ
+            const pingEl = document.getElementById('status-ping');
+            const dotEl = document.getElementById('status-dot');
+            const colorMap = {
+                emerald: ['bg-emerald-400', 'bg-emerald-400'],
+                pink: ['bg-pink-400', 'bg-pink-400'],
+                amber: ['bg-amber-400', 'bg-amber-400']
+            };
+            const chosenColor = colorMap[shopConfig.statusColor] || colorMap.emerald;
+            pingEl.className = `animate-ping absolute inline-flex h-full w-full rounded-full ${chosenColor[0]} opacity-75`;
+            dotEl.className = `relative inline-flex rounded-full h-2.5 w-2.5 ${chosenColor[1]}`;
+
+            // อัปเดตหมวดหมู่ในฟอร์มเขียนรีวิว
+            const selectEl = document.getElementById('reviewer-category');
+            const cats = Array.isArray(shopConfig.categories) && shopConfig.categories.length > 0 
+                ? shopConfig.categories 
+                : DEFAULT_SHOP_CONFIG.categories;
+            selectEl.innerHTML = cats.map(cat => `<option value="${escapeHTML(cat)}">${escapeHTML(cat)}</option>`).join('');
+        }
+
+        // -----------------------------------------------------------------
+        // 6.1 ระบบล็อกอินรหัสผ่านเจ้าของร้าน (Admin Password Lock)
+        // -----------------------------------------------------------------
+        function handleAdminButtonClick() {
+            if (isAdminMode) {
+                openSettingsModal();
+            } else {
+                openLoginModal();
+            }
+        }
+
+        function openLoginModal() {
+            document.getElementById('admin-password-input').value = '';
+            document.getElementById('login-error-msg').classList.add('hidden');
+            const modal = document.getElementById('login-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => document.getElementById('admin-password-input').focus(), 100);
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('login-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function verifyAdminPassword(event) {
+            event.preventDefault();
+            const inputPass = document.getElementById('admin-password-input').value;
+            const currentCorrectPass = shopConfig.adminPassword || DEFAULT_SHOP_CONFIG.adminPassword;
+
+            if (inputPass === currentCorrectPass) {
+                isAdminMode = true;
+                sessionStorage.setItem('pastel_admin_unlocked', 'true');
+                closeLoginModal();
+                updateAdminUIState();
+                openSettingsModal();
+                showToast("ปลดล็อกโหมดเจ้าของร้านสำเร็จ 👑");
+            } else {
+                const errorMsg = document.getElementById('login-error-msg');
+                const modalBox = document.getElementById('login-modal-box');
+                errorMsg.classList.remove('hidden');
+                modalBox.classList.remove('shake-error');
+                void modalBox.offsetWidth; // trigger reflow
+                modalBox.classList.add('shake-error');
+            }
+        }
+
+        function lockAdminSession() {
+            isAdminMode = false;
+            sessionStorage.removeItem('pastel_admin_unlocked');
+            updateAdminUIState();
+            showToast("ล็อกออกจากระบบเจ้าของร้านแล้ว 🔒");
+        }
+
+        function updateAdminUIState() {
+            const banner = document.getElementById('admin-banner');
+            const lockClosed = document.getElementById('icon-lock-closed');
+            const lockOpen = document.getElementById('icon-lock-open');
+
+            if (isAdminMode) {
+                banner.classList.remove('hidden');
+                lockClosed.classList.add('hidden');
+                lockOpen.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+                lockClosed.classList.remove('hidden');
+                lockOpen.classList.add('hidden');
+            }
+            renderReviewsList();
+        }
+
+        function switchSettingsTab(tab) {
+            const shopTab = document.getElementById('settings-tab-shop');
+            const secTab = document.getElementById('settings-tab-security');
+            const btnShop = document.getElementById('tab-btn-shop');
+            const btnSec = document.getElementById('tab-btn-security');
+
+            if (tab === 'shop') {
+                shopTab.classList.remove('hidden');
+                secTab.classList.add('hidden');
+                btnShop.className = "flex-1 py-2 rounded-xl bg-white text-[#FF5C93] shadow-xs transition cursor-pointer";
+                btnSec.className = "flex-1 py-2 rounded-xl text-[#8C767E] hover:text-[#FF5C93] transition cursor-pointer";
+            } else {
+                shopTab.classList.add('hidden');
+                secTab.classList.remove('hidden');
+                btnSec.className = "flex-1 py-2 rounded-xl bg-white text-[#FF5C93] shadow-xs transition cursor-pointer";
+                btnShop.className = "flex-1 py-2 rounded-xl text-[#8C767E] hover:text-[#FF5C93] transition cursor-pointer";
+            }
+        }
+
+        function openSettingsModal() {
+            if (!isAdminMode) {
+                openLoginModal();
+                return;
+            }
+            document.getElementById('edit-shop-name').value = shopConfig.shopName;
+            document.getElementById('edit-shop-tagline').value = shopConfig.shopTagline;
+            document.getElementById('edit-status-text').value = shopConfig.statusText;
+            document.getElementById('edit-status-color').value = shopConfig.statusColor || 'emerald';
+            document.getElementById('edit-categories').value = (shopConfig.categories || DEFAULT_SHOP_CONFIG.categories).join(', ');
+            document.getElementById('edit-logo-url').value = shopConfig.logoType;
+            document.getElementById('edit-admin-password').value = shopConfig.adminPassword || DEFAULT_SHOP_CONFIG.adminPassword;
+
+            switchSettingsTab('shop');
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function setLogoPreset(preset) {
+            document.getElementById('edit-logo-url').value = preset;
+        }
+
+        function saveShopSettings() {
+            shopConfig.shopName = document.getElementById('edit-shop-name').value.trim() || DEFAULT_SHOP_CONFIG.shopName;
+            shopConfig.shopTagline = document.getElementById('edit-shop-tagline').value.trim() || DEFAULT_SHOP_CONFIG.shopTagline;
+            shopConfig.statusText = document.getElementById('edit-status-text').value.trim() || DEFAULT_SHOP_CONFIG.statusText;
+            shopConfig.statusColor = document.getElementById('edit-status-color').value || 'emerald';
+            shopConfig.logoType = document.getElementById('edit-logo-url').value.trim() || 'bear';
+
+            const rawCats = document.getElementById('edit-categories').value;
+            const parsedCats = rawCats.split(',').map(c => c.trim()).filter(Boolean);
+            if (parsedCats.length > 0) {
+                shopConfig.categories = parsedCats;
+            }
+
+            const newPass = document.getElementById('edit-admin-password').value.trim();
+            if (newPass) {
+                shopConfig.adminPassword = newPass;
+            }
+            
+            localStorage.setItem('pastel_shop_config', JSON.stringify(shopConfig));
+            
+            applyShopConfigToUI();
+            closeSettingsModal();
+            showToast("บันทึกข้อมูลร้านค้าเรียบร้อยแล้ว ✨");
+        }
+
+        // -----------------------------------------------------------------
+        // 6.2 ส่งออกไฟล์ HTML สำเร็จรูป (ฝังข้อมูลร้าน & รหัสผ่านใหม่ลงในโค้ด)
+        // -----------------------------------------------------------------
+        function exportStandaloneHTML() {
+            // บันทึกค่าล่าสุดก่อนส่งออก
+            saveShopSettings();
+
+            // ดึงโค้ด HTML ปัจจุบันทั้งหมด
+            let htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+            // สร้างสคริปต์ค่าเริ่มต้นชุดใหม่ที่ฝังข้อมูลร้านของลูกค้าลงไปตรงๆ
+            const updatedConfigScript = `<script id="shop-config-script">
+        const DEFAULT_SHOP_CONFIG = ${JSON.stringify(shopConfig, null, 12)};
+    <\/script>`;
+
+            // แทนที่บล็อก DEFAULT_SHOP_CONFIG เดิมด้วยค่าใหม่
+            htmlContent = htmlContent.replace(
+                /<script id="shop-config-script">[\s\S]*?<\/script>/,
+                updatedConfigScript
+            );
+
+            // สั่งดาวน์โหลดเป็นไฟล์ index.html
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast("ดาวน์โหลดไฟล์ index.html พร้อมใช้งานแล้ว 🎉");
+        }
+
+        function openSettingsModal() {
+            document.getElementById('edit-shop-name').value = shopConfig.shopName;
+            document.getElementById('edit-shop-tagline').value = shopConfig.shopTagline;
+            document.getElementById('edit-status-text').value = shopConfig.statusText;
+            document.getElementById('edit-logo-url').value = shopConfig.logoType;
+            document.getElementById('edit-admin-mode').checked = isAdminMode;
+
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function setLogoPreset(preset) {
+            document.getElementById('edit-logo-url').value = preset;
+        }
+
+        function saveShopSettings() {
+            shopConfig.shopName = document.getElementById('edit-shop-name').value.trim() || DEFAULT_SHOP_CONFIG.shopName;
+            shopConfig.shopTagline = document.getElementById('edit-shop-tagline').value.trim() || DEFAULT_SHOP_CONFIG.shopTagline;
+            shopConfig.statusText = document.getElementById('edit-status-text').value.trim() || DEFAULT_SHOP_CONFIG.statusText;
+            shopConfig.logoType = document.getElementById('edit-logo-url').value.trim() || 'bear';
+            
+            localStorage.setItem('pastel_shop_config', JSON.stringify(shopConfig));
+            toggleAdminMode(document.getElementById('edit-admin-mode').checked);
+            
+            applyShopConfigToUI();
+            closeSettingsModal();
+            showToast("บันทึกข้อมูลร้านค้าเรียบร้อยแล้ว ✨");
+        }
+
+        function resetShopConfig() {
+            shopConfig = { ...DEFAULT_SHOP_CONFIG };
+            localStorage.removeItem('pastel_shop_config');
+            applyShopConfigToUI();
+            closeSettingsModal();
+            showToast("คืนค่าข้อมูลร้านค้าเริ่มต้นแล้ว");
+        }
+
+        function toggleAdminMode(enable) {
+            isAdminMode = enable;
+            const banner = document.getElementById('admin-banner');
+            if (isAdminMode) {
+                banner.classList.remove('hidden');
+            } else {
+                banner.classList.add('hidden');
+            }
+            renderReviewsList();
+        }
+
+        // -----------------------------------------------------------------
+        // 7. ระบบฟอร์มเขียนรีวิว & อัปโหลดรูปภาพพรีวิว
+        // -----------------------------------------------------------------
+        const RATING_LABELS = {
+            1: "ต้องปรับปรุง",
+            2: "พอใช้ได้",
+            3: "น่ารักดีค่ะ",
+            4: "ชอบมากๆ เลย",
+            5: "ประทับใจมาก!"
+        };
+
+        function setRating(star) {
+            currentRating = star;
+            document.getElementById('rating-label').textContent = RATING_LABELS[star];
+            const buttons = document.querySelectorAll('#star-selector .star-btn');
+            buttons.forEach(btn => {
+                const val = parseInt(btn.dataset.star);
+                if (val <= star) {
+                    btn.classList.remove('text-pink-200');
+                    btn.classList.add('text-amber-400');
+                } else {
+                    btn.classList.remove('text-amber-400');
+                    btn.classList.add('text-pink-200');
+                }
+            });
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // ย่อขนาดรูปอัตโนมัติก่อนเก็บใน LocalStorage เพื่อไม่ให้เต็มเร็ว
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxDim = 600;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                        else { w = Math.round(w * maxDim / h); h = maxDim; }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    uploadedImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+                    document.getElementById('image-preview').src = uploadedImageBase64;
+                    document.getElementById('image-preview-wrapper').classList.remove('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearUploadedImage() {
+            uploadedImageBase64 = "";
+            document.getElementById('review-image-input').value = "";
+            document.getElementById('image-preview-wrapper').classList.add('hidden');
+        }
+
+        function submitNewReview(event) {
+            event.preventDefault();
+            const name = document.getElementById('reviewer-name').value.trim();
+            const category = document.getElementById('reviewer-category').value;
+            const comment = document.getElementById('reviewer-comment').value.trim();
+
+            if (!name || !comment) return;
+
+            const newReview = {
+                id: Date.now(),
+                name: name,
+                category: category,
+                rating: currentRating,
+                comment: comment,
+                date: "เมื่อสักครู่",
+                likes: 1,
+                likedByMe: true,
+                pinned: false,
+                image: uploadedImageBase64
+            };
+
+            reviews.unshift(newReview);
+            localStorage.setItem('pastel_shop_reviews', JSON.stringify(reviews));
+
+            // รีเซ็ตฟอร์ม
+            document.getElementById('review-form').reset();
+            setRating(5);
+            clearUploadedImage();
+
+            // อัปเดตหน้าจอ & ฉลองโปรยหัวใจ
+            renderRatingSummary();
+            renderReviewsList();
+            triggerHeartStarShower(32);
+            showToast("ขอบคุณสำหรับรีวิวน่ารักๆ นะคะ 🩷✨");
+        }
+
+        // -----------------------------------------------------------------
+        // 8. การแสดงผลสรุปคะแนน & รายการรีวิวลูกค้า
+        // -----------------------------------------------------------------
+        function renderRatingSummary() {
+            const total = reviews.length;
+            document.getElementById('total-reviews-count').textContent = total;
+
+            if (total === 0) {
+                document.getElementById('avg-rating-number').textContent = "5.0";
+                return;
+            }
+
+            const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+            const avg = (sum / total).toFixed(1);
+            document.getElementById('avg-rating-number').textContent = avg;
+
+            // สร้างแถบสัดส่วน 5 -> 1 ดาว
+            const barsContainer = document.getElementById('rating-bars-container');
+            barsContainer.innerHTML = '';
+
+            for (let star = 5; star >= 1; star--) {
+                const count = reviews.filter(r => r.rating === star).length;
+                const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+
+                barsContainer.innerHTML += `
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="w-7 font-semibold text-[#7A646C] flex items-center gap-0.5">${star}<span class="text-amber-400">★</span></span>
+                        <div class="flex-1 h-2 bg-[#FFF0F5] rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-[#FF9EC0] to-[#FF6B9E] rounded-full transition-all duration-500" style="width: ${percent}%"></div>
+                        </div>
+                        <span class="w-6 text-right text-[11px] text-[#9E8A92] tabular-nums">${count}</span>
+                    </div>
+                `;
+            }
+        }
+
+        function filterReviews(filterType) {
+            currentFilter = filterType;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filterType) {
+                    btn.className = "filter-btn active text-xs font-semibold px-3 py-1 rounded-full bg-[#FF7AA8] text-white shadow-xs transition cursor-pointer";
+                } else {
+                    btn.className = "filter-btn text-xs font-medium px-3 py-1 rounded-full bg-white/90 text-[#8C767E] border border-pink-100 hover:bg-pink-50 transition cursor-pointer";
+                }
+            });
+            renderReviewsList();
+        }
+
+        function renderReviewsList() {
+            const listEl = document.getElementById('reviews-list');
+            let filtered = [...reviews];
+
+            // เรียงให้รีวิวที่ปักหมุดอยู่ด้านบนสุดเสมอ
+            filtered.sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+
+            if (currentFilter === '5') {
+                filtered = filtered.filter(r => r.rating === 5);
+            } else if (currentFilter === 'photo') {
+                filtered = filtered.filter(r => r.image && r.image.length > 0);
+            }
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `
+                    <div class="pastel-card p-8 text-center space-y-2">
+                        <div class="text-3xl">🌸</div>
+                        <p class="text-sm font-medium text-[#7A646C]">ยังไม่มีรีวิวในหมวดนี้เลยค่า</p>
+                        <p class="text-xs text-[#9E8A92]">มาเป็นคนแรกที่เขียนรีวิวน่ารักๆ ด้านบนได้เลยนะ!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = filtered.map(r => {
+                const starsStr = '★'.repeat(r.rating) + '<span class="text-pink-200">' + '★'.repeat(5 - r.rating) + '</span>';
+                const initialChar = r.name.charAt(0).toUpperCase();
+
+                return `
+                    <article class="pastel-card p-5 space-y-3 ${r.pinned ? 'ring-2 ring-[#FFB3D1] bg-gradient-to-b from-[#FFF9FB] to-white' : ''}">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <!-- อวตารตัวอักษรสีชมพูพาสเทล -->
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD6E5] to-[#FFEBF2] border border-pink-200 flex items-center justify-center font-bold text-sm text-[#FF5C93] shrink-0">
+                                    ${initialChar}
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <h3 class="text-sm font-bold text-[#4A3B41]">${escapeHTML(r.name)}</h3>
+                                        ${r.pinned ? `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FF7AA8] text-white">📌 ปักหมุด</span>` : ''}
+                                        <span class="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-[#FFF5F8] text-[#FF6B9E] border border-pink-100">
+                                            ${escapeHTML(r.category)}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-xs text-amber-400 tracking-tight">${starsStr}</span>
+                                        <span class="text-[11px] text-[#B39EA6]">• ${r.date}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ปุ่มจัดการรีวิว: ปักหมุด / ลบ (แสดงเฉพาะเมื่อเจ้าของร้านล็อกอิน) -->
+                            ${isAdminMode ? `
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button onclick="togglePinReview(${r.id})" title="${r.pinned ? 'เลิกปักหมุด' : 'ปักหมุดไว้บนสุด'}" class="p-1.5 rounded-xl ${r.pinned ? 'bg-pink-100 text-[#FF5C93]' : 'bg-gray-50 text-gray-400 hover:bg-pink-50 hover:text-[#FF5C93]'} transition cursor-pointer text-xs">
+                                        📌
+                                    </button>
+                                    <button onclick="deleteReview(${r.id})" title="ลบรีวิวนี้" class="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-500 transition cursor-pointer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- ข้อความรีวิว -->
+                        <p class="text-sm text-[#5A4A50] leading-relaxed whitespace-pre-line">${escapeHTML(r.comment)}</p>
+
+                        <!-- รูปภาพรีวิว (ถ้ามี) -->
+                        ${r.image ? `
+                            <div class="pt-1">
+                                <img src="${r.image}" onclick="openLightbox('${r.image}')" alt="รูปรีวิวจากลูกค้า"
+                                     class="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-2xl border border-pink-200/80 cursor-zoom-in hover:opacity-90 transition shadow-xs">
+                            </div>
+                        ` : ''}
+
+                        <!-- ปุ่มกดหัวใจถูกใจรีวิว -->
+                        <div class="flex items-center justify-end pt-1">
+                            <button onclick="toggleLikeReview(${r.id})"
+                                    class="flex items-center gap-1.5 text-xs px-3 py-1 rounded-full border transition cursor-pointer ${r.likedByMe ? 'bg-[#FFF0F5] border-pink-200 text-[#FF5C93] font-semibold' : 'bg-white border-pink-100 text-[#9E8A92] hover:bg-pink-50'}">
+                                <span>${r.likedByMe ? '🩷' : '🤍'}</span>
+                                <span>ถูกใจ (${r.likes})</span>
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function toggleLikeReview(id) {
+            const idx = reviews.findIndex(r => r.id === id);
+            if (idx === -1) return;
+            reviews[idx].likedByMe = !reviews[idx].likedByMe;
+            reviews[idx].likes += reviews[idx].likedByMe ? 1 : -1;
+            localStorage.setItem('pastel_shop_reviews', JSON.stringify(reviews));
+            renderReviewsList();
+        }
+
+        function togglePinReview(id) {
+            const idx = reviews.findIndex(r => r.id === id);
+            if (idx === -1) return;
+            reviews[idx].pinned = !reviews[idx].pinned;
+            localStorage.setItem('pastel_shop_reviews', JSON.stringify(reviews));
+            renderReviewsList();
+            showToast(reviews[idx].pinned ? "ปักหมุดรีวิวไว้บนสุดแล้ว 📌" : "ยกเลิกการปักหมุดแล้ว");
+        }
+
+        function deleteReview(id) {
+            reviews = reviews.filter(r => r.id !== id);
+            localStorage.setItem('pastel_shop_reviews', JSON.stringify(reviews));
+            renderRatingSummary();
+            renderReviewsList();
+            showToast("ลบรีวิวเรียบร้อยแล้ว");
+        }
+
+        // -----------------------------------------------------------------
+        // 9. กล่องเล่นเพลงพาสเทล (Web Audio API Music Box Synthesizer)
+        //    สร้างเสียงดนตรีกล่องดนตรีจริง ไม่ต้องง้อไฟล์ MP3 ภายนอก
+        // -----------------------------------------------------------------
+        const TRACKS = [
+            {
+                title: "Pastel Music Box",
+                subtitle: "Melou BGM • กล่องดนตรีกล่อมฝัน",
+                tempo: 420,
+                wave: "sine",
+                notes: [523.25, 659.25, 783.99, 1046.50, 987.77, 783.99, 659.25, 587.33, 659.25, 783.99, 659.25, 523.25]
+            },
+            {
+                title: "Cozy Strawberry Lo-Fi",
+                subtitle: "Sweet Chill • บรรยากาศร้านขนมหวาน",
+                tempo: 520,
+                wave: "triangle",
+                notes: [440.00, 523.25, 659.25, 783.99, 698.46, 659.25, 523.25, 493.88, 523.25, 659.25, 587.33, 440.00]
+            },
+            {
+                title: "Twinkle Pastel Pop",
+                subtitle: "Happy Day • วันสดใสสีชมพู",
+                tempo: 340,
+                wave: "sine",
+                notes: [587.33, 739.99, 880.00, 1174.66, 880.00, 739.99, 659.25, 783.99, 987.77, 880.00, 739.99, 587.33]
+            }
+        ];
+
+        let audioCtx = null;
+        let isPlaying = false;
+        let currentTrackIndex = 0;
+        let noteStep = 0;
+        let musicInterval = null;
+        let secondsElapsed = 0;
+        let timerInterval = null;
+        let masterVolume = 0.35;
+
+        function playNote(freq, waveType) {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = waveType;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            // เสียงนุ่มๆ คล้ายกล่องดนตรี (Music Box envelope)
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.exponentialRampToValueAtTime(masterVolume * 0.25, now + 0.03);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + 1.15);
+        }
+
+        function toggleMusic() {
+            if (isPlaying) {
+                pauseMusic();
+            } else {
+                startMusic();
+            }
+        }
+
+        function startMusic() {
+            isPlaying = true;
+            document.getElementById('icon-play').classList.add('hidden');
+            document.getElementById('icon-pause').classList.remove('hidden');
+            document.getElementById('music-disc').classList.remove('disc-paused');
+
+            const track = TRACKS[currentTrackIndex];
+            playNote(track.notes[noteStep % track.notes.length], track.wave);
+            noteStep++;
+
+            clearInterval(musicInterval);
+            musicInterval = setInterval(() => {
+                const t = TRACKS[currentTrackIndex];
+                playNote(t.notes[noteStep % t.notes.length], t.wave);
+                noteStep++;
+            }, track.tempo);
+
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = Math.floor(secondsElapsed / 60);
+                const secs = secondsElapsed % 60;
+                document.getElementById('music-timer').textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                const progress = ((secondsElapsed % 30) / 30) * 100;
+                document.getElementById('music-progress').style.width = progress + '%';
+            }, 1000);
+        }
+
+        function pauseMusic() {
+            isPlaying = false;
+            document.getElementById('icon-play').classList.remove('hidden');
+            document.getElementById('icon-pause').classList.add('hidden');
+            document.getElementById('music-disc').classList.add('disc-paused');
+            clearInterval(musicInterval);
+            clearInterval(timerInterval);
+        }
+
+        function selectTrack(index) {
+            currentTrackIndex = index;
+            noteStep = 0;
+            secondsElapsed = 0;
+            document.getElementById('music-timer').textContent = "0:00";
+            document.getElementById('music-progress').style.width = "0%";
+
+            const track = TRACKS[index];
+            document.getElementById('track-title').textContent = track.title;
+            document.getElementById('track-subtitle').textContent = track.subtitle;
+
+            document.querySelectorAll('.track-pill').forEach((pill, i) => {
+                if (i === index) {
+                    pill.className = "track-pill active text-[11px] font-semibold px-3 py-1 rounded-full bg-[#FFE3EE] text-[#FF5C93] transition cursor-pointer whitespace-nowrap";
+                } else {
+                    pill.className = "track-pill text-[11px] font-medium px-3 py-1 rounded-full bg-[#FFF7FA] text-[#9E8A92] hover:bg-[#FFF0F5] transition cursor-pointer whitespace-nowrap";
+                }
+            });
+
+            if (isPlaying) {
+                startMusic();
+            }
+        }
+
+        function nextTrack() {
+            selectTrack((currentTrackIndex + 1) % TRACKS.length);
+        }
+
+        function prevTrack() {
+            selectTrack((currentTrackIndex - 1 + TRACKS.length) % TRACKS.length);
+        }
+
+        function updateVolume(val) {
+            masterVolume = val / 100;
+        }
+
+        // -----------------------------------------------------------------
+        // 10. ฟังก์ชันเสริม (Lightbox ดูรูป, Toast แจ้งเตือน, ป้องกัน XSS)
+        // -----------------------------------------------------------------
+        function openLightbox(src) {
+            document.getElementById('lightbox-img').src = src;
+            const modal = document.getElementById('lightbox-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightbox-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-box');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 2800);
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag]));
+        }
+    </script>
+</body>
+</html>
